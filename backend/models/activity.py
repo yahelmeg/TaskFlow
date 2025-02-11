@@ -1,8 +1,6 @@
-from sqlmodel import SQLModel, Field, Relationship
+from sqlmodel import SQLModel, Field
 from typing import Optional
-import datetime
-from .task import Task
-from .user import User
+from datetime import datetime
 from backend.database import utc_now
 
 class TaskActivity(SQLModel, table=True):
@@ -10,10 +8,6 @@ class TaskActivity(SQLModel, table=True):
     description: str
     timestamp: datetime = Field(default_factory=utc_now)
 
-    # Foreign Keys
-    task_id: int = Field(foreign_key="task.id", index=True)
-    user_id: Optional[int] = Field(foreign_key="user.id", index=True)
-
-    # Relationships
-    task: Optional[Task] = Relationship(back_populates="task_activities")
-    user: Optional[User] = Relationship(back_populates="user_activities")
+    # Foreign key
+    user_id: int = Field(default=None, foreign_key="user.id", index=True)
+    task_id: int = Field(default=None, foreign_key="task.id", index=True)

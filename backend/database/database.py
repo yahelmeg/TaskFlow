@@ -1,7 +1,9 @@
-from sqlmodel import create_engine, SQLModel, Session
+from sqlmodel import create_engine, SQLModel, Session, select
 import os
 from dotenv import load_dotenv
-from backend.models.role import Role, Permission
+from backend.models.role import Role
+from backend.models.relationships import RolePermissionLink
+from backend.models.permission import Permission
 from sqlalchemy.exc import IntegrityError
 
 load_dotenv()
@@ -18,18 +20,20 @@ def create_tables():
     SQLModel.metadata.create_all(engine)
 
 def initialize_roles_and_permissions():
-
     session = Session(engine)
-    roles = ["Admin", "Manager", "User"]
+
+    # Define roles and permissions
+    roles = ["Admin", "User_Management", "Task_Management", "Comment_Management", "Team_Management", "Role_Management"]
 
     permissions = [
-        "create_user", "delete_user", "update_user",
-        "create_task", "update_task", "assign_task", "delete_task",
-        "create_comment", "delete_comments", "view_comments", "view_activities",
+        "create_user", "delete_user", "update_user", "view_all_users",
+        "create_task", "update_task", "assign_task", "delete_task", "view_all_tasks",
+        "create_comment", "delete_comments", "view_activities",
         "create_team", "add_user_to_team", "remove_user_from_team",
-        "create_role", "create_permission", "delete_permissions", "assign_role",
+        "create_role", "update_permission", "assign_role"
     ]
 
+    # Create roles in the database
     for role in roles:
         try:
             role_obj = Role(name=role)
@@ -38,6 +42,7 @@ def initialize_roles_and_permissions():
         except IntegrityError:
             session.rollback()
 
+    # Create permissions in the database
     for permission in permissions:
         try:
             permission_obj = Permission(name=permission)
@@ -45,6 +50,41 @@ def initialize_roles_and_permissions():
             session.commit()
         except IntegrityError:
             session.rollback()
+
+    role_permission_map = {
+        "Admin": permissions,
+        "User_Management": [
+            "create_user", "delete_user", "update_user", "view_all_users"
+        ],
+        "Task_Management": [
+            "create_task", "update_task", "assign_task", "delete_task"
+        ],
+        "Comment_Management": [
+            "create_comment", "delete_comments"
+        ],
+        "Team_Management": [
+            "create_team", "add_user_to_team", "remove_user_from_team"
+        ],
+        "Role_Management": [
+            "create_role", "update_permission", "assign_role"
+        ]
+    }
+
+    for role_name, permission_for_role in role_permission_map.items():
+        role_statement = select(Role).where(Role.name == role_name)
+        role_obj = session.exec(role_statement).first()
+        if role_obj:
+            for permission_name in permission_for_role:
+                permission_statement=  select(Permission).where( Permission.name == permission_name)
+                permission_obj = session.exec(permission_statement).first()
+
+                if permission_obj:
+                    role_permission_link = RolePermissionLink(role_id = role_obj.id ,permission_id = permission_obj.id)
+                    session.add(role_permission_link)
+            session.commit()
+
+    session.close()
+
 
 def delete_database():
     try:
