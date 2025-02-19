@@ -32,6 +32,6 @@ class Task(SQLModel, table=True):
     )
     task_categories: List["TaskCategory"] = Relationship(link_model=TaskCategoryLink)
     task_activities: List["TaskActivity"] = Relationship()
-    comments: List["TaskComment"] = Relationship()
+    task_comments: List["TaskComment"] = Relationship()
 
 

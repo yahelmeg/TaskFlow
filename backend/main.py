@@ -4,7 +4,7 @@ import uvicorn
 
 app = FastAPI()
 
-# delete_database()
+#delete_database()
 create_tables()
 initialize_roles_and_permissions()
 
