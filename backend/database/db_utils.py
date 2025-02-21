@@ -9,5 +9,5 @@ def utc_now() -> datetime:
 
 def get_user(username: str, db: Session = Depends(get_db)):
     statement = select(User).where(User.username == username)
-    result = db.exec(statement).first()
-    return result
+    user = db.exec(statement).first()
+    return user
