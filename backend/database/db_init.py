@@ -1,103 +1,55 @@
-from sqlmodel import create_engine, SQLModel, Session, select
-import os
-from dotenv import load_dotenv
+from sqlmodel import  SQLModel,  select
 from backend.models.role import Role
 from backend.models.relationships import RolePermissionLink
 from backend.models.permission import Permission
 from sqlalchemy.exc import IntegrityError
-from contextlib import contextmanager
-from fastapi import Depends
-from db_dependencies import get_db
-
-
-load_dotenv()
-
-postgres_user = os.getenv("POSTGRES_USER")
-postgres_password = os.getenv("POSTGRES_PASSWORD")
-postgres_host = os.getenv("POSTGRES_HOST")
-postgres_port = os.getenv("POSTGRES_PORT")
-postgres_db = os.getenv("POSTGRES_DB")
-postgres_url = f"postgresql://{postgres_user}:{postgres_password}@{postgres_host}:{postgres_port}/{postgres_db}"
-engine = create_engine(postgres_url)
-
-@contextmanager
-def get_session():
-    session = Session(engine)
-    try:
-        yield session
-    finally:
-        session.close()
-
+from backend.database.db_config import engine
+from sqlmodel import Session
+from backend.database.role_enums import (
+    RoleEnum, PERMISSION_ENUM, ROLE_PERMISSIONS_MAP
+)
 
 def create_tables():
     SQLModel.metadata.create_all(engine)
 
-def initialize_roles_and_permissions(db=Depends(get_db)):
 
-    with db as session:
-
-        # Define roles and permissions
-        roles = ["Admin", "User_Management", "Task_Management", "Comment_Management", "Team_Management", "Role_Management"]
-
-        permissions = [
-            "create_user", "delete_user", "update_user", "view_all_users",
-            "create_task", "update_task", "assign_task", "delete_task", "view_all_tasks",
-            "create_comment", "delete_comments", "view_activities",
-            "create_team", "add_user_to_team", "remove_user_from_team",
-            "create_role", "update_permission", "assign_role"
-        ]
-
+def initialize_roles_and_permissions():
+    with Session(engine) as db:
         # Create roles in the database
-        for role in roles:
+        for role in RoleEnum:
             try:
-                role_obj = Role(name=role)
-                session.add(role_obj)
-                session.commit()
+                role_obj = Role(name=role.value)
+                db.add(role_obj)
+                db.commit()
             except IntegrityError:
-                session.rollback()
+                db.rollback()
 
         # Create permissions in the database
-        for permission in permissions:
+        for permission in PERMISSION_ENUM:
             try:
-                permission_obj = Permission(name=permission)
-                session.add(permission_obj)
-                session.commit()
+                permission_obj = Permission(name=permission.value)
+                db.add(permission_obj)
+                db.commit()
             except IntegrityError:
-                session.rollback()
+                db.rollback()
 
-        role_permission_map = {
-            "Admin": permissions,
-            "User_Management": [
-                "create_user", "delete_user", "update_user", "view_all_users"
-            ],
-            "Task_Management": [
-                "create_task", "update_task", "assign_task", "delete_task"
-            ],
-            "Comment_Management": [
-                "create_comment", "delete_comments"
-            ],
-            "Team_Management": [
-                "create_team", "add_user_to_team", "remove_user_from_team"
-            ],
-            "Role_Management": [
-                "create_role", "update_permission", "assign_role"
-            ]
-        }
-
-        for role_name, permission_for_role in role_permission_map.items():
-            role_statement = select(Role).where(Role.name == role_name)
-            role_obj = session.exec(role_statement).first()
+        for role_enum, permission_list in ROLE_PERMISSIONS_MAP.items():
+            role_statement = select(Role).where(Role.name == role_enum.value)
+            role_obj = db.exec(role_statement).first()
             if role_obj:
-                for permission_name in permission_for_role:
-                    permission_statement=  select(Permission).where( Permission.name == permission_name)
-                    permission_obj = session.exec(permission_statement).first()
-
+                for permission_enum in permission_list:
+                    permission_statement = select(Permission).where(Permission.name == permission_enum.value)
+                    permission_obj = db.exec(permission_statement).first()
                     if permission_obj:
-                        role_permission_link = RolePermissionLink(role_id = role_obj.id ,permission_id = permission_obj.id)
-                        session.add(role_permission_link)
-                session.commit()
+                        role_permission_link = RolePermissionLink(
+                            role_id=role_obj.id,
+                            permission_id=permission_obj.id
+                        )
+                        db.add(role_permission_link)
+                db.commit()
 
-        session.close()
+        db.close()
+        print("Database initialized successfully.")
 
 
 # Testing method, only used to test db initialization and reset the db.
