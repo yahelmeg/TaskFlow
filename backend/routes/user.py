@@ -2,30 +2,15 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
 from backend.models.user import User
 from backend.database.db_dependencies import get_db
-from backend.schemas.user.user import UserCreateRequest, UserResponse, UserUpdateRequest
-from backend.database.db_utils import db_add_and_refresh
+from backend.schemas.user import UserResponse, UserUpdateRequest
 from backend.authentication.encryption import hash_password
 from backend.utils.user_utils import email_exists, username_exists, get_user_by_id
 
-router = APIRouter()
 user_router = APIRouter(prefix="/user")
 
 class UserController:
     def __init__(self, db: Session):
         self.db = db
-
-    def create_user(self, user: UserCreateRequest) -> UserResponse:
-        if username_exists(username=user.username, db=self.db):
-            raise HTTPException(status_code=400, detail="Username already taken")
-        if email_exists(email=user.email, db=self.db):
-            raise HTTPException(status_code=400, detail="Email already taken")
-
-        hashed_password = hash_password(password=user.password)
-        new_user = db_add_and_refresh(
-            db=self.db,
-            obj=User(username=user.username, email=user.email, hashed_password=hashed_password)
-        )
-        return new_user
 
     def get_user(self, user_id: int) -> UserResponse:
         user = get_user_by_id(user_id=user_id, db=self.db)
@@ -69,11 +54,6 @@ class UserController:
         self.db.commit()
 
         return None
-
-# Use the controller in your routes
-@user_router.post("/create", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-def create_user(user: UserCreateRequest, db: Session = Depends(get_db)):
-    return UserController(db).create_user(user)
 
 @user_router.get("/{user_id}", response_model=UserResponse, status_code=status.HTTP_200_OK)
 def get_user(user_id: int, db: Session = Depends(get_db)):
