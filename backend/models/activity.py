@@ -1,7 +1,7 @@
 from sqlmodel import SQLModel, Field
 from typing import Optional
 from datetime import datetime
-from backend.database import utc_now
+from backend.utils.time_utils import utc_now
 
 class TaskActivity(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)

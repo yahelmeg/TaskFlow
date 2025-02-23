@@ -1,7 +1,7 @@
 from sqlmodel import SQLModel, Field, Relationship
 from typing import Optional, List
 from datetime import datetime
-from backend.database.db_utils import utc_now
+from backend.utils.time_utils import utc_now
 from backend.models.relationships import UserRoleLink, UserTeamLink
 from backend.models.role import Role
 from backend.models.team import Team

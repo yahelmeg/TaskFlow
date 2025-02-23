@@ -2,8 +2,12 @@ from sqlmodel import SQLModel, Field, Relationship
 from typing import List, Optional
 from datetime import datetime
 from enum import Enum
-from backend.database.db_utils import utc_now
+from backend.utils.time_utils import utc_now
 from backend.models.relationships import TaskCategoryLink
+from backend.models.user import User
+from backend.models.activity import TaskActivity
+from backend.models.category import TaskCategory
+from backend.models.comment import TaskComment
 
 class TaskPriority(str, Enum):
     LOW = "low"
@@ -25,7 +29,7 @@ class Task(SQLModel, table=True):
 
     # Relationships
     assignee: Optional["User"] = Relationship(
-        sa_relationship_kwargs={"foreign_keys": "Task.assigned_to_id"}
+        sa_relationship_kwargs={"foreign_keys": "Task.assignee_id"}
     )
     created_by: Optional["User"] = Relationship(
         sa_relationship_kwargs={"foreign_keys": "Task.created_by_id"}
