@@ -1,12 +1,14 @@
 from fastapi import FastAPI
-from backend.database import create_tables, initialize_roles_and_permissions
+
+from backend.config import BACK_DOMAIN, BACK_PORT
+from backend.database import create_tables, initialize_roles_and_permissions,delete_database
 import uvicorn
 from backend.routes.user import user_router
 from backend.routes.authentication import auth_router
 
 app = FastAPI()
 
-# delete_database()
+delete_database()
 create_tables()
 initialize_roles_and_permissions()
 
@@ -20,4 +22,4 @@ def read_root():
     return {"message": "Welcome to TaskFlow API!"}
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    uvicorn.run(app, host=BACK_DOMAIN, port=BACK_PORT)

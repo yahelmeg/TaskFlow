@@ -1,12 +1,13 @@
 from sqlmodel import  SQLModel,  select
+from backend.models.user import User
 from backend.models.role import Role
 from backend.models.relationships import RolePermissionLink
 from backend.models.permission import Permission
 from sqlalchemy.exc import IntegrityError
-from backend.database.db_config import engine
+from backend.database.db_config import engine, admin_email, admin_password
 from sqlmodel import Session
 from backend.database.role_enums import (
-    RoleEnum, PERMISSION_ENUM, ROLE_PERMISSIONS_MAP
+    RoleEnum, PERMISSION_LIST, ROLE_PERMISSIONS_MAP
 )
 
 def create_tables():
@@ -15,7 +16,8 @@ def create_tables():
 
 def initialize_roles_and_permissions():
     with Session(engine) as db:
-        # Create roles in the database
+
+
         for role in RoleEnum:
             try:
                 role_obj = Role(name=role.value)
@@ -24,8 +26,7 @@ def initialize_roles_and_permissions():
             except IntegrityError:
                 db.rollback()
 
-        # Create permissions in the database
-        for permission in PERMISSION_ENUM:
+        for permission in PERMISSION_LIST:
             try:
                 permission_obj = Permission(name=permission.value)
                 db.add(permission_obj)
@@ -47,6 +48,13 @@ def initialize_roles_and_permissions():
                         )
                         db.add(role_permission_link)
                 db.commit()
+
+        admin_role_statement = select(Role).where(Role.name == "Admin")
+        role_admin = db.exec(admin_role_statement).first()
+        admin_user = User(email=admin_email, name="Admin", hashed_password=admin_password, roles=[role_admin])
+        db.add(admin_user)
+        db.commit()
+        db.refresh(admin_user)
 
         db.close()
         print("Database initialized successfully.")

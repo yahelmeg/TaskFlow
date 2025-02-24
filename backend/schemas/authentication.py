@@ -1,13 +1,17 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
+from typing import Optional
 
-class UserCreateRequest(BaseModel):
-    username: str
+class Token(BaseModel):
+    access_token: str
+    refresh_token: str
+    token_type: str
+
+class CreateRequest(BaseModel):
+    name: str
     email: str
     password: str
 
-class UserLoginRequest(BaseModel):
-    username: str
+class LoginRequest(BaseModel):
     email: str
     password: str
-
 

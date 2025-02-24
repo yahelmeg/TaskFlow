@@ -57,7 +57,7 @@ class RoleWriteEnum(str, Enum):
     UPDATE_PERMISSION = "update_permission"
     ASSIGN_ROLE = "assign_role"
 
-PERMISSION_ENUM = (
+PERMISSION_LIST = (
                 list(UserReadEnum) + list(UserWriteEnum) + list(TaskReadEnum) + list(TaskWriteEnum) +
                 list(CommentReadEnum) + list(CommentWriteEnum) + list(ActivityReadEnum) +
                 list(TeamReadEnum) + list(TeamWriteEnum) + list(RoleReadEnum) + list(RoleWriteEnum)

@@ -1,12 +1,13 @@
+from typing import Optional
 from pydantic import BaseModel
 
 class UserUpdateRequest(BaseModel):
-    username: str
-    email: str
-    password: str
+    name: Optional[str] = None
+    email: Optional[str] = None
+    password: Optional[str] = None
 
 class UserResponse(BaseModel):
     id: int
-    username: str
+    name: str
     email: str
 
