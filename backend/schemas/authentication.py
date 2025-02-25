@@ -1,5 +1,4 @@
-from pydantic import BaseModel, model_validator
-from typing import Optional
+from pydantic import BaseModel
 
 class Token(BaseModel):
     access_token: str
@@ -14,4 +13,8 @@ class CreateRequest(BaseModel):
 class LoginRequest(BaseModel):
     email: str
     password: str
+
+class TokenData(BaseModel):
+    id: int
+    permissions: list[str]
 

@@ -1,14 +1,5 @@
-
 from sqlmodel import Session, select
 from backend.models.user import User
-
-
-def username_exists(username:str, db : Session ) -> bool:
-    statement = select(User).where(User.username == username)
-    user = db.exec(statement).first()
-    if user:
-        return True
-    return False
 
 def email_exists(email:str, db : Session ) -> bool:
     statement = select(User).where(User.email == email)

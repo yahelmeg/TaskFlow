@@ -13,7 +13,6 @@ from backend.authentication.jwt_handler import create_access_token, create_refre
 
 auth_router = APIRouter(prefix="", tags=['Authentication'])
 
-
 class AuthController:
     def __init__(self, db: Session):
         self.db = db
@@ -37,8 +36,14 @@ class AuthController:
         if not db_user or not verify_password(user_credentials.password, db_user.hashed_password):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
-        access_token = create_access_token({"sub": db_user.email})
-        refresh_token = create_refresh_token({"sub": db_user.email})
+        if db_user.roles:
+            permissions = list({perm.name for role in db_user.roles for perm in role.permissions})
+        else:
+            permissions = []
+
+        access_token = create_access_token({"sub": str(db_user.id), "permissions": permissions})
+        refresh_token = create_refresh_token({"sub": db_user.id})
+
 
         return Token(access_token=access_token, refresh_token=refresh_token, token_type="Bearer")
 
@@ -53,5 +58,10 @@ def login(user_credentials: OAuth2PasswordRequestForm = Depends() , db: Session 
 
 @auth_router.post("/logout")
 def logout():
-    #todo: add token blacklisting
+    # todo revoke refresh tokens
     return {"message": "Logged out successfully."}
+
+@auth_router.post("/refresh")
+def refresh_access_token():
+    # todo refresh access token using refresh token
+    return {"message": "Token Refreshed."}
