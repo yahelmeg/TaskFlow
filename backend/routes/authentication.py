@@ -17,8 +17,7 @@ class AuthController:
     def __init__(self, db: Session):
         self.db = db
 
-    def create_user(self, user: CreateRequest, active_user: User = Depends(get_current_user)) -> UserResponse:
-        #todo check permissions
+    def register(self, user: CreateRequest) -> UserResponse:
         if email_exists(email=user.email, db=self.db):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already taken")
 
@@ -36,21 +35,15 @@ class AuthController:
         if not db_user or not verify_password(user_credentials.password, db_user.hashed_password):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
-        if db_user.roles:
-            permissions = list({perm.name for role in db_user.roles for perm in role.permissions})
-        else:
-            permissions = []
-
-        access_token = create_access_token({"sub": str(db_user.id), "permissions": permissions})
-        refresh_token = create_refresh_token({"sub": db_user.id})
-
+        access_token = create_access_token({"sub": str(db_user.id)})
+        refresh_token = create_refresh_token({"sub": str(db_user.id)})
 
         return Token(access_token=access_token, refresh_token=refresh_token, token_type="Bearer")
 
 
-@auth_router.post("/create", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-def create_user(user: CreateRequest, db: Session = Depends(get_db), active_user: User = Depends(get_current_user)):
-    return AuthController(db).create_user(user,active_user)
+@auth_router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+def register(user: CreateRequest, db: Session = Depends(get_db)):
+    return AuthController(db).register(user)
 
 @auth_router.post("/login", status_code=status.HTTP_200_OK)
 def login(user_credentials: OAuth2PasswordRequestForm = Depends() , db: Session = Depends(get_db)):
