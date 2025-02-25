@@ -1,1 +1,1 @@
-from . import user, role, team, comment, activity, task, category, permission
+from . import user, role, board, comment, activity, task, category

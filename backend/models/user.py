@@ -2,9 +2,9 @@ from sqlmodel import SQLModel, Field, Relationship
 from typing import Optional, List
 from datetime import datetime
 from backend.utils.time_utils import utc_now
-from backend.models.relationships import UserRoleLink, UserTeamLink
+from backend.models.relationships import UserRoleLink, UserBoardLink
 from backend.models.role import Role
-from backend.models.team import Team
+from backend.models.board import Board
 
 class User(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -13,7 +13,8 @@ class User(SQLModel, table=True):
     email: str
     created_at: datetime = Field(default_factory=utc_now)
 
+    #Relationships
     roles: List[Role] = Relationship(link_model=UserRoleLink)
-    team: Optional[Team] = Relationship(link_model=UserTeamLink)
+    board: Optional[Board] = Relationship(link_model=UserBoardLink)
 
 

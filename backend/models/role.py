@@ -1,14 +1,16 @@
-from sqlmodel import SQLModel, Field, Relationship
-from typing import Optional, List
-from backend.models.relationships import RolePermissionLink
-from backend.models.permission import  Permission
+from sqlmodel import SQLModel, Field
+from typing import Optional
+from enum import Enum
+
+class RolesEnum(str, Enum):
+    ADMIN = "admin"
+    OWNER = "owner"
+    CONTRIBUTOR = "contributor"
+    VIEWER = "viewer"
 
 class Role(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    name: str
-
-    # Relationships
-    permissions: List["Permission"] = Relationship(link_model=RolePermissionLink)
+    name: str = Field(unique=True)
 
 
 
