@@ -1,7 +1,7 @@
 from sqlmodel import Session, select, SQLModel
 from fastapi import Depends
 from backend.models.user import User
-from backend.database.db_dependencies import get_db
+from backend.dependencies.db_dependencies import get_db
 
 
 def get_user(email: str, db: Session = Depends(get_db)):

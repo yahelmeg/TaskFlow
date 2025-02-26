@@ -5,7 +5,7 @@ class Token(BaseModel):
     refresh_token: str
     token_type: str
 
-class CreateRequest(BaseModel):
+class RegisterRequest(BaseModel):
     name: str
     email: str
     password: str

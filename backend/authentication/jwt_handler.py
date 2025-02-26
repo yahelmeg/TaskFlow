@@ -51,12 +51,4 @@ def get_current_user(token: str = Depends(oauth2_scheme)) -> TokenData :
         )
     return TokenData(id=user_id, roles=user_roles)
 
-def require_role(required_roles: list[str]):
-    def role_checker(active_user: TokenData = Depends(get_current_user)):
-        if not set(required_roles).issubset(set(active_user.roles)):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Not permitted ",
-            )
-        return active_user
-    return role_checker
+

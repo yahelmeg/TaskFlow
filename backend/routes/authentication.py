@@ -2,14 +2,14 @@ from fastapi import APIRouter, HTTPException, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import Session
 from backend.models.user import User
-from backend.database.db_dependencies import get_db
+from backend.dependencies.db_dependencies import get_db
 from backend.schemas.user import UserResponse
-from backend.schemas.authentication import CreateRequest, LoginRequest, Token
-from backend.database.db_utils import db_add_and_refresh
+from backend.schemas.authentication import RegisterRequest, Token
+from backend.utils.db_utils import db_add_and_refresh
 from backend.authentication.encryption import hash_password
 from backend.utils.user_utils import email_exists, get_user_by_email
 from backend.authentication.encryption import verify_password
-from backend.authentication.jwt_handler import create_access_token, create_refresh_token, get_current_user
+from backend.authentication.jwt_handler import create_access_token, create_refresh_token
 
 auth_router = APIRouter(prefix="", tags=['Authentication'])
 
@@ -17,7 +17,7 @@ class AuthController:
     def __init__(self, db: Session):
         self.db = db
 
-    def register(self, user: CreateRequest) -> UserResponse:
+    def register(self, user: RegisterRequest) -> UserResponse:
         if email_exists(email=user.email, db=self.db):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already taken")
 
@@ -47,7 +47,7 @@ class AuthController:
 
 
 @auth_router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-def register(user: CreateRequest, db: Session = Depends(get_db)):
+def register(user: RegisterRequest, db: Session = Depends(get_db)):
     return AuthController(db).register(user)
 
 @auth_router.post("/login", status_code=status.HTTP_200_OK)

@@ -1,11 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
 from backend.models.user import User
-from backend.database.db_dependencies import get_db
+from backend.dependencies.db_dependencies import get_db
 from backend.schemas.user import UserResponse, UserUpdateRequest
 from backend.authentication.encryption import hash_password
 from backend.utils.user_utils import email_exists,get_user_by_id
-from backend.authentication.jwt_handler import get_current_user, require_role
+from backend.authentication.jwt_handler import get_current_user
+from backend.dependencies.auth_dependencies import require_role
 from backend.schemas.authentication import TokenData
 
 
@@ -46,7 +47,7 @@ class UserController:
 
         return UserResponse.model_validate(user.model_dump())
 
-    def delete_user(self, user_id: int, active_user: TokenData):
+    def delete_user(self, user_id: int, active_user: TokenData) :
         user = get_user_by_id(user_id=user_id, db=self.db)
         if not user:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
