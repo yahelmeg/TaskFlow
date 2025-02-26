@@ -43,6 +43,7 @@ class UserController:
         return UserResponse.model_validate(user.model_dump())
 
     def delete_user(self, user_id: int) :
+        #todo handle cascade deleting
         user = get_user_by_id(user_id=user_id, db=self.db)
         if not user:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
@@ -56,7 +57,7 @@ def get_user(user_id: int,
              _: TokenData = Depends(get_current_user),
              __: TokenData = Depends(require_role(["admin"]))
              ):
-    return UserController(db).get_user(user_id)
+    return UserController(db).get_user(user_id=user_id)
 
 @user_router.get("/", response_model=list[UserResponse], status_code=status.HTTP_200_OK)
 def get_users(db: Session = Depends(get_db),
@@ -72,7 +73,7 @@ def update_user(user_id: int,
                 _: TokenData = Depends(get_current_user),
                 __: TokenData = Depends(require_role(["admin"]))
                 ):
-    return UserController(db).update_user(user_id, user_update)
+    return UserController(db).update_user(user_id=user_id, user_update=user_update)
 
 @user_router.delete("/delete/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_user(user_id: int,
@@ -80,4 +81,4 @@ def delete_user(user_id: int,
                 _: TokenData = Depends(get_current_user),
                 __: TokenData = Depends(require_role(["admin"]))
                 ):
-    return UserController(db).delete_user(user_id)
+    return UserController(db).delete_user(user_id=user_id)
