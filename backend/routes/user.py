@@ -5,7 +5,7 @@ from backend.database.db_dependencies import get_db
 from backend.schemas.user import UserResponse, UserUpdateRequest
 from backend.authentication.encryption import hash_password
 from backend.utils.user_utils import email_exists,get_user_by_id
-from backend.authentication.jwt_handler import get_current_user
+from backend.authentication.jwt_handler import get_current_user, require_role
 from backend.schemas.authentication import TokenData
 
 
@@ -27,7 +27,6 @@ class UserController:
         #todo check permissions
         users = self.db.exec(select(User)).all()
         return [UserResponse.model_validate(user.model_dump()) for user in users]
-
 
     def update_user(self, user_id: int, user_update: UserUpdateRequest, active_user: TokenData ) -> UserResponse:
         #todo check permissions
@@ -63,17 +62,33 @@ class UserController:
         return None
 
 @user_router.get("/{user_id}", response_model=UserResponse, status_code=status.HTTP_200_OK)
-def get_user(user_id: int, db: Session = Depends(get_db), active_user: TokenData = Depends(get_current_user)):
+def get_user(user_id: int,
+             db: Session = Depends(get_db),
+             active_user: TokenData = Depends(get_current_user),
+             _: TokenData = Depends(require_role(["admin"]))
+             ):
     return UserController(db).get_user(user_id, active_user)
 
 @user_router.get("/", response_model=list[UserResponse], status_code=status.HTTP_200_OK)
-def get_users(db: Session = Depends(get_db), active_user: TokenData = Depends(get_current_user)):
+def get_users(db: Session = Depends(get_db),
+              active_user: TokenData = Depends(get_current_user),
+              _: TokenData = Depends(require_role(["admin"]))
+              ):
     return UserController(db).get_users(active_user)
 
 @user_router.patch("/update/{user_id}", response_model=UserResponse, status_code=status.HTTP_200_OK)
-def update_user(user_id: int, user_update: UserUpdateRequest, db: Session = Depends(get_db), active_user: TokenData = Depends(get_current_user)):
+def update_user(user_id: int,
+                user_update: UserUpdateRequest,
+                db: Session = Depends(get_db),
+                active_user: TokenData = Depends(get_current_user),
+                _: TokenData = Depends(require_role(["admin"]))
+                ):
     return UserController(db).update_user(user_id, user_update, active_user)
 
 @user_router.delete("/delete/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_user(user_id: int, db: Session = Depends(get_db), active_user: TokenData = Depends(get_current_user)):
+def delete_user(user_id: int,
+                db: Session = Depends(get_db),
+                active_user: TokenData = Depends(get_current_user),
+                _: TokenData = Depends(require_role(["admin"]))
+                ):
     return UserController(db).delete_user(user_id, active_user)

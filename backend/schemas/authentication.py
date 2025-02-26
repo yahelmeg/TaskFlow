@@ -16,5 +16,5 @@ class LoginRequest(BaseModel):
 
 class TokenData(BaseModel):
     id: int
-    permissions: list[str]
+    roles: list[str]
 

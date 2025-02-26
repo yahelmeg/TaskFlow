@@ -42,14 +42,14 @@ def verify_token(token: str, exception_message: str) -> dict:
 def get_current_user(token: str = Depends(oauth2_scheme)) -> TokenData :
     payload = verify_token(token, "Authorization token is missing")
     user_id = payload.get("sub")
-    user_permissions = payload.get("permissions")
+    user_roles = payload.get("roles")
     if user_id is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    return TokenData(id=user_id, permissions=user_permissions)
+    return TokenData(id=user_id, roles=user_roles)
 
 def require_role(required_roles: list[str]):
     def role_checker(active_user: TokenData = Depends(get_current_user)):
