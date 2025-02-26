@@ -16,20 +16,16 @@ class UserController:
         self.db = db
 
     def get_user(self, user_id: int, active_user: TokenData ) -> UserResponse:
-        #todo check permissions
         user = get_user_by_id(user_id=user_id, db=self.db)
         if not user:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
         return UserResponse.model_validate(user.model_dump())
 
     def get_users(self, active_user: TokenData) -> list[UserResponse]:
-
-        #todo check permissions
         users = self.db.exec(select(User)).all()
         return [UserResponse.model_validate(user.model_dump()) for user in users]
 
     def update_user(self, user_id: int, user_update: UserUpdateRequest, active_user: TokenData ) -> UserResponse:
-        #todo check permissions
         user = get_user_by_id(user_id=user_id, db=self.db)
         if not user:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
@@ -51,7 +47,6 @@ class UserController:
         return UserResponse.model_validate(user.model_dump())
 
     def delete_user(self, user_id: int, active_user: TokenData):
-        #todo check permissions
         user = get_user_by_id(user_id=user_id, db=self.db)
         if not user:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
