@@ -25,10 +25,10 @@ TaskFlow is a task management API system that enables users to collaborate by cr
 - `POST /refresh` - Refresh access token using the refresh token
 
 ### Boards
-- `POST /boards` - Create a new board  
-- `GET /boards/{board_id}/users` - Get users of a board  
-- `PATCH /boards/{board_id}` - Update board details  
-- `DELETE /boards/{board_id}` - Delete a board  
-- `GET /boards` - Get all boards  
+- `POST /board` - Create a new board  
+- `GET /board/{board_id}/users` - Get users of a board  
+- `PATCH /board/{board_id}` - Update board details  
+- `DELETE /board/{board_id}` - Delete a board  
+- `GET /board` - Get all boards  
 
 
