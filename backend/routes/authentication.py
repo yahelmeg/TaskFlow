@@ -1,15 +1,15 @@
 from fastapi import APIRouter, HTTPException, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import Session
-from backend.models.user import User
-from backend.dependencies.db_dependencies import get_db
-from backend.schemas.user import UserResponse
-from backend.schemas.authentication import RegisterRequest, Token
-from backend.utils.db_utils import db_add_and_refresh
-from backend.authentication.encryption import hash_password
-from backend.utils.user_utils import email_exists, get_user_by_email
-from backend.authentication.encryption import verify_password
+
+from backend.authentication.encryption import hash_password, verify_password
 from backend.authentication.jwt_handler import create_access_token, create_refresh_token
+from backend.dependencies.db_dependencies import get_db
+from backend.models.user import User
+from backend.schemas.authentication import RegisterRequest, Token
+from backend.schemas.user import UserResponse
+from backend.utils.db_utils import db_add_and_refresh
+from backend.utils.user_utils import email_exists, get_user_by_email
 
 auth_router = APIRouter(prefix="", tags=['Authentication'])
 

@@ -1,20 +1,22 @@
-from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List
+
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
+
 from backend.authentication.jwt_handler import get_current_user
 from backend.dependencies.auth_dependencies import require_role
-from backend.models.board import Board
-from backend.utils.user_utils import get_user_by_id
-from backend.models.user import User
-from backend.models.relationships import UserBoardLink
-from backend.schemas.board import BoardResponse, BoardUserResponse, BoardCreateRequest, BoardUpdateRequest
-from backend.utils.db_utils import db_add_and_refresh
-from backend.schemas.authentication import TokenData
-from backend.utils.board_utils import get_board_by_id
-from backend.utils.role_utils import get_role_by_name , get_role_by_id
-from backend.dependencies.db_dependencies import get_db
 from backend.dependencies.board_dependencies import require_board_role
-
+from backend.dependencies.db_dependencies import get_db
+from backend.models.board import Board
+from backend.models.relationships import UserBoardLink
+from backend.models.role import Role
+from backend.models.user import User
+from backend.schemas.authentication import TokenData
+from backend.schemas.board import BoardResponse, BoardUserResponse, BoardCreateRequest, BoardUpdateRequest
+from backend.utils.board_utils import get_board_by_id
+from backend.utils.db_utils import db_add_and_refresh
+from backend.utils.role_utils import get_role_by_name
+from backend.utils.user_utils import get_user_by_id
 
 board_router = APIRouter(prefix="/board", tags=['Board'])
 
@@ -43,16 +45,21 @@ class BoardController:
         board = get_board_by_id(board_id=board_id,db=self.db)
         if not board:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Board not found")
-        users_in_board_statement = select(User,UserBoardLink.role_id).join(UserBoardLink).where(UserBoardLink.board_id == board.id)
+        users_in_board_statement = (
+            select(User, Role)
+            .select_from(User)
+            .join(UserBoardLink)
+            .join(Role)
+            .where(UserBoardLink.board_id == board.id)
+        )
         users_in_board = self.db.exec(users_in_board_statement).all()
-        #todo : improve this by querying role names once instead of doing it for every user
         user_responses = [
             BoardUserResponse(
                 name = user.name,
                 email = user.email,
-                role_name = (get_role_by_id(role_id=role_id,db=self.db)).name
+                role_name = role.name
             )
-            for user, role_id in users_in_board
+            for user, role in users_in_board
         ]
         return user_responses
 
@@ -82,7 +89,6 @@ class BoardController:
 
         self.db.delete(board)
         self.db.commit()
-
         return None
 
     def add_user_to_board(self, board_id: int):
@@ -127,3 +133,10 @@ def delete_board(board_id: int,
                  _: TokenData = Depends(get_current_user),
                  __: None = Depends(require_board_role(["owner"]))):
     return BoardController(db).delete_board(board_id=board_id)
+
+
+
+
+
+
+

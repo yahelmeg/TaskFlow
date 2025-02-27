@@ -1,6 +1,8 @@
-from sqlmodel import SQLModel, Field
-from typing import Optional
 from enum import Enum
+from typing import Optional
+
+from sqlmodel import SQLModel, Field
+
 
 class RolesEnum(str, Enum):
     ADMIN = "admin"
@@ -11,6 +13,3 @@ class RolesEnum(str, Enum):
 class Role(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str = Field(unique=True)
-
-
-

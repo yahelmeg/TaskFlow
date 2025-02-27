@@ -2,10 +2,11 @@ from fastapi import Depends, HTTPException, status
 from sqlmodel import Session, select
 
 from backend.authentication.jwt_handler import get_current_user
+from backend.dependencies.db_dependencies import get_db
 from backend.models.relationships import UserBoardLink
 from backend.schemas.authentication import TokenData
-from backend.dependencies.db_dependencies import get_db
 from backend.utils.role_utils import get_role_by_name
+
 
 def require_board_role(required_roles: list[str]):
     def role_checker(board_id: int, active_user: TokenData = Depends(get_current_user), db: Session = Depends(get_db)):

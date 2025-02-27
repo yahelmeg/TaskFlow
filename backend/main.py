@@ -1,18 +1,19 @@
-from fastapi import FastAPI
-from backend.config import BACK_DOMAIN, BACK_PORT
-from backend.database import create_tables, initialize_roles_and_permissions,delete_database
 import uvicorn
-from backend.routes.board import board_router
-from backend.routes.user import user_router
+from fastapi import FastAPI
+
+from backend.config import BACK_DOMAIN, BACK_PORT
 from backend.routes.authentication import auth_router
+from backend.routes.board import board_router
+from backend.routes.me import me_router
+from backend.routes.user import user_router
 
 app = FastAPI()
 
-delete_database()
-create_tables()
-initialize_roles_and_permissions()
+#delete_database()
+#create_tables()
+#initialize_roles_and_permissions()
 
-routers = [ board_router, auth_router, user_router]
+routers = [ me_router, board_router, auth_router, user_router]
 
 for router in routers:
     app.include_router(router)

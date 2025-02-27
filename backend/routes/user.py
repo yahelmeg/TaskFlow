@@ -1,14 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
-from backend.models.user import User
-from backend.dependencies.db_dependencies import get_db
-from backend.schemas.user import UserResponse, UserUpdateRequest
+
 from backend.authentication.encryption import hash_password
-from backend.utils.user_utils import email_exists,get_user_by_id
 from backend.authentication.jwt_handler import get_current_user
 from backend.dependencies.auth_dependencies import require_role
+from backend.dependencies.db_dependencies import get_db
+from backend.models.user import User
 from backend.schemas.authentication import TokenData
-
+from backend.schemas.user import UserResponse, UserUpdateRequest
+from backend.utils.user_utils import email_exists, get_user_by_id
 
 user_router = APIRouter(prefix="/user", tags=['User'])
 

@@ -1,14 +1,17 @@
-from sqlmodel import SQLModel, Field, Relationship
-from typing import List, Optional
 from datetime import datetime
 from enum import Enum
-from backend.utils.time_utils import utc_now
-from backend.models.relationships import TaskCategoryLink, TaskBoardLink, TaskUserLink
-from backend.models.user import User
+from typing import List, Optional
+
+from sqlmodel import SQLModel, Field, Relationship
+
 from backend.models.activity import TaskActivity
+from backend.models.board import Board
 from backend.models.category import TaskCategory
 from backend.models.comment import TaskComment
-from backend.models.board import Board
+from backend.models.relationships import TaskCategoryLink, TaskBoardLink, TaskUserLink
+from backend.models.user import User
+from backend.utils.time_utils import utc_now
+
 
 class TaskPriority(str, Enum):
     LOW = "low"

@@ -1,10 +1,13 @@
-from sqlmodel import SQLModel, Field, Relationship
-from typing import Optional, List
 from datetime import datetime
-from backend.utils.time_utils import utc_now
+from typing import Optional, List
+
+from sqlmodel import SQLModel, Field, Relationship
+
+from backend.models.board import Board
 from backend.models.relationships import UserRoleLink, UserBoardLink
 from backend.models.role import Role
-from backend.models.board import Board
+from backend.utils.time_utils import utc_now
+
 
 class User(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)

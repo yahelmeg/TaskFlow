@@ -1,9 +1,11 @@
-import jwt
 from datetime import datetime, timedelta, UTC
-from jwt.exceptions import InvalidTokenError, ExpiredSignatureError
-from backend.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES, REFRESH_TOKEN_EXPIRE_DAYS
+
+import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
+from jwt.exceptions import InvalidTokenError, ExpiredSignatureError
+
+from backend.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES, REFRESH_TOKEN_EXPIRE_DAYS
 from backend.schemas.authentication import TokenData
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='login')

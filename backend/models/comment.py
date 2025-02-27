@@ -1,7 +1,10 @@
-from sqlmodel import SQLModel, Field, Relationship
-from typing import Optional
 from datetime import datetime
+from typing import Optional
+
+from sqlmodel import SQLModel, Field
+
 from backend.utils.time_utils import utc_now
+
 
 class TaskComment(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)

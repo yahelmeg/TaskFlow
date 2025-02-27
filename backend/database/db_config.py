@@ -1,6 +1,8 @@
-from sqlmodel import create_engine
 import os
+
 from dotenv import load_dotenv
+from sqlmodel import create_engine
+
 from backend.authentication.encryption import hash_password
 
 load_dotenv()

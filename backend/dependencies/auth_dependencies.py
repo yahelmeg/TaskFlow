@@ -1,6 +1,8 @@
 from fastapi import Depends, HTTPException, status
+
 from backend.authentication.jwt_handler import get_current_user
 from backend.schemas.authentication import TokenData
+
 
 def require_role(required_roles: list[str]):
     def role_checker(active_user: TokenData = Depends(get_current_user)):

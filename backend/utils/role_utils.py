@@ -1,5 +1,7 @@
 from sqlmodel import Session, select
+
 from backend.models.role import Role
+
 
 def get_role_by_name(role_name: str , db: Session):
     role_statement = select(Role).where(Role.name == role_name)

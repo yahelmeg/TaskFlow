@@ -1,9 +1,9 @@
-from sqlmodel import  SQLModel,  select
-from backend.models.user import User
-from backend.models.role import Role
+from sqlmodel import SQLModel, select, Session
+
 from backend.database.db_config import engine, admin_email, admin_password
-from sqlmodel import Session
-from backend.models.role import RolesEnum
+from backend.models.role import Role, RolesEnum
+from backend.models.user import User
+
 
 def create_tables():
     SQLModel.metadata.create_all(engine)
