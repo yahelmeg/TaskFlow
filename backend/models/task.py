@@ -30,7 +30,6 @@ class Task(SQLModel, table=True):
     # Relationships
     board: Optional["Board"] = Relationship(link_model=TaskBoardLink)
     creator: Optional["User"] = Relationship(link_model=TaskUserLink)
-
     task_categories: List["TaskCategory"] = Relationship(link_model=TaskCategoryLink)
     task_activities: List["TaskActivity"] = Relationship()
     task_comments: List["TaskComment"] = Relationship()

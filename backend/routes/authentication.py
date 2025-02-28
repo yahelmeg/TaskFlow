@@ -46,13 +46,17 @@ class AuthController:
         return Token(access_token=access_token, refresh_token=refresh_token, token_type="Bearer")
 
 
+def get_authentication_controller(db: Session = Depends(get_db)) -> AuthController:
+    return AuthController(db)
+
 @auth_router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-def register(user: RegisterRequest, db: Session = Depends(get_db)):
-    return AuthController(db).register(user)
+def register(user: RegisterRequest, controller: AuthController = Depends(get_authentication_controller)):
+    return controller.register(user)
 
 @auth_router.post("/login", status_code=status.HTTP_200_OK)
-def login(user_credentials: OAuth2PasswordRequestForm = Depends() , db: Session = Depends(get_db)):
-    return AuthController(db).login(user_credentials)
+def login(user_credentials: OAuth2PasswordRequestForm = Depends() ,
+          controller: AuthController = Depends(get_authentication_controller)):
+    return controller.login(user_credentials)
 
 @auth_router.post("/logout")
 def logout():

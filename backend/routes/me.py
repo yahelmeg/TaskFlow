@@ -9,6 +9,8 @@ from backend.models.user import User
 from backend.schemas.authentication import TokenData
 from backend.schemas.board import BoardResponse
 from backend.schemas.user import UserResponse
+from backend.schemas.invitation import InvitationResponse
+from backend.utils.invitation_utils import get_pending_invitations_for_user, get_past_invitations_for_user
 
 me_router = APIRouter(prefix="/me", tags=['Me'])
 
@@ -26,16 +28,40 @@ class MeController:
         user = self.db.exec(user_statement).first()
         return UserResponse.model_validate(user.model_dump())
 
+    def get_my_pending_invitations(self, active_user: TokenData = Depends(get_current_user)) -> list[InvitationResponse]:
 
-@me_router.get("/board", response_model=list[BoardResponse], status_code=status.HTTP_200_OK)
-def get_user_boards(db: Session = Depends(get_db),
+        pending_invitations = get_pending_invitations_for_user(user_id=active_user.id,db=self.db)
+        return [InvitationResponse.model_validate(invitation.model_dump()) for invitation in pending_invitations]
+
+    def get_my_past_invitations(self, active_user: TokenData = Depends(get_current_user)) -> list[InvitationResponse]:
+        print("here")
+
+        past_invitations = get_past_invitations_for_user(user_id=active_user.id,db=self.db)
+        return [InvitationResponse.model_validate(invitation.model_dump()) for invitation in past_invitations]
+
+
+def get_me_controller(db: Session = Depends(get_db)) -> MeController:
+    return MeController(db)
+
+@me_router.get("/boards", response_model=list[BoardResponse], status_code=status.HTTP_200_OK)
+def get_user_boards(controller: MeController = Depends(get_me_controller),
                     active_user: TokenData = Depends(get_current_user)):
-    return MeController(db).get_my_boards(active_user=active_user)
+    return controller.get_my_boards(active_user=active_user)
 
 @me_router.get("/user", response_model=UserResponse, status_code=status.HTTP_200_OK)
-def get_my_profile(db: Session = Depends(get_db),
+def get_my_profile(controller: MeController = Depends(get_me_controller),
                    active_user: TokenData = Depends(get_current_user)):
-    return MeController(db).get_my_profile(active_user=active_user)
+    return controller.get_my_profile(active_user=active_user)
+
+@me_router.get("/pending-invitations", response_model=list[InvitationResponse], status_code=status.HTTP_200_OK)
+def get_my_pending_invitations(controller: MeController = Depends(get_me_controller),
+                   active_user: TokenData = Depends(get_current_user)):
+    return controller.get_my_pending_invitations(active_user=active_user)
+
+@me_router.get("/past-invitations", response_model=list[InvitationResponse], status_code=status.HTTP_200_OK)
+def get_my_past_invitations(controller: MeController = Depends(get_me_controller),
+                   active_user: TokenData = Depends(get_current_user)):
+    return controller.get_my_past_invitations(active_user=active_user)
 
 
 
