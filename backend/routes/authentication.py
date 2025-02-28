@@ -46,6 +46,7 @@ class AuthController:
         return Token(access_token=access_token, refresh_token=refresh_token, token_type="Bearer")
 
     def refresh_token(self, refresh_token: str) -> Token:
+        print("here")
         payload = verify_token(token=refresh_token, exception_message="Invalid refresh token" )
         user_id = payload.get("sub")
 
@@ -89,7 +90,7 @@ def login(user_credentials: OAuth2PasswordRequestForm = Depends() ,
           controller: AuthController = Depends(get_authentication_controller)):
     return controller.login(user_credentials)
 
-@auth_router.post("refresh", status_code=status.HTTP_200_OK)
+@auth_router.post("/refresh", status_code=status.HTTP_200_OK)
 def refresh(refresh_token: str = Body(..., embed=True),
             controller: AuthController = Depends(get_authentication_controller)):
     return controller.refresh_token(refresh_token=refresh_token)
