@@ -21,3 +21,7 @@ class BoardCreateRequest(BaseModel):
 class BoardUpdateRequest(BaseModel):
     name: str
     description: Optional[str]
+
+class InviteRequest(BaseModel):
+    board_id: int
+    user_id: int

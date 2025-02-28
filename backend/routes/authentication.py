@@ -1,15 +1,18 @@
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, Depends, status, Body
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import Session
+from datetime import UTC, datetime
 
 from backend.authentication.encryption import hash_password, verify_password
-from backend.authentication.jwt_handler import create_access_token, create_refresh_token
+from backend.authentication.jwt_handler import create_access_token, create_refresh_token, verify_token
 from backend.dependencies.db_dependencies import get_db
 from backend.models.user import User
 from backend.schemas.authentication import RegisterRequest, Token
 from backend.schemas.user import UserResponse
 from backend.utils.db_utils import db_add_and_refresh
-from backend.utils.user_utils import email_exists, get_user_by_email
+from backend.utils.user_utils import email_exists, get_user_by_email, get_user_by_id
+from backend.utils.token_utils import blacklist_refresh_token, check_blacklisted
+
 
 auth_router = APIRouter(prefix="", tags=['Authentication'])
 
@@ -35,15 +38,43 @@ class AuthController:
         if not db_user or not verify_password(user_credentials.password, db_user.hashed_password):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
-        roles = []
-        if db_user.roles:
-            for role in db_user.roles:
-                roles.append(role.name)
+        roles = [role.name for role in db_user.roles] if db_user.roles else []
 
         access_token = create_access_token({"sub": str(db_user.id), "roles": roles})
         refresh_token = create_refresh_token({"sub": str(db_user.id)})
 
         return Token(access_token=access_token, refresh_token=refresh_token, token_type="Bearer")
+
+    def refresh_token(self, refresh_token: str) -> Token:
+        payload = verify_token(token=refresh_token, exception_message="Invalid refresh token" )
+        user_id = payload.get("sub")
+
+        if not user_id:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
+        db_user = get_user_by_id(user_id=user_id, db=self.db)
+
+        if not db_user:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User does not exist")
+        roles = [role.name for role in db_user.roles] if db_user.roles else []
+
+        if check_blacklisted(token=refresh_token, db=self.db):
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token is blacklisted")
+
+        expires_at = datetime.fromtimestamp(payload["exp"], tz=UTC)
+        blacklist_refresh_token(token=refresh_token, expires_at=expires_at, db=self.db)
+
+        new_access_token = create_access_token({"sub": str(db_user.id), "roles": roles})
+        new_refresh_token = create_refresh_token({"sub": str(db_user.id)})
+
+        return Token(access_token=new_access_token, refresh_token=new_refresh_token, token_type="Bearer")
+
+    def logout(self, refresh_token: str):
+
+        payload = verify_token(token=refresh_token, exception_message="Invalid refresh token")
+        expires_at = datetime.fromtimestamp(payload["exp"], tz=UTC)
+        blacklist_refresh_token(token=refresh_token, expires_at=expires_at, db=self.db)
+
+        return {"message": "Logged out successfully."}
 
 
 def get_authentication_controller(db: Session = Depends(get_db)) -> AuthController:
@@ -58,12 +89,14 @@ def login(user_credentials: OAuth2PasswordRequestForm = Depends() ,
           controller: AuthController = Depends(get_authentication_controller)):
     return controller.login(user_credentials)
 
-@auth_router.post("/logout")
-def logout():
-    # todo revoke refresh tokens
-    return {"message": "Logged out successfully."}
+@auth_router.post("refresh", status_code=status.HTTP_200_OK)
+def refresh(refresh_token: str = Body(..., embed=True),
+            controller: AuthController = Depends(get_authentication_controller)):
+    return controller.refresh_token(refresh_token=refresh_token)
 
-@auth_router.post("/refresh")
-def refresh_access_token():
-    # todo refresh access token using refresh token
-    return {"message": "Token Refreshed."}
+@auth_router.post("/logout", status_code=status.HTTP_200_OK)
+def logout(refresh_token: str = Body(..., embed=True),
+           controller: AuthController = Depends(get_authentication_controller)):
+    return controller.logout(refresh_token=refresh_token)
+
+

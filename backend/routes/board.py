@@ -13,7 +13,7 @@ from backend.models.relationships import UserBoardLink
 from backend.models.role import Role
 from backend.models.user import User
 from backend.schemas.authentication import TokenData
-from backend.schemas.board import BoardResponse, BoardUserResponse, BoardCreateRequest, BoardUpdateRequest
+from backend.schemas.board import BoardResponse, BoardUserResponse, BoardCreateRequest, BoardUpdateRequest, InviteRequest
 from backend.utils.board_utils import get_board_by_id, check_if_user_in_board
 from backend.utils.db_utils import db_add_and_refresh
 from backend.utils.role_utils import get_role_by_name
@@ -93,21 +93,23 @@ class BoardController:
         self.db.commit()
         return None
 
-    def invite_user_to_board(self, board_id: int, user_id: int, active_user: TokenData = Depends(get_current_user)):
+    def invite_user_to_board(self, invite_info: InviteRequest,
+                             active_user: TokenData = Depends(get_current_user)):
         #todo check that the request comes from board owner
-        board = get_board_by_id(board_id=board_id, db=self.db)
+        board = get_board_by_id(board_id=invite_info.board_id, db=self.db)
         if not board:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Board not found")
-        user = get_user_by_id(user_id=user_id, db=self.db)
+        user = get_user_by_id(user_id=invite_info.user_id, db=self.db)
         if not user:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-        existing_invitation = get_pending_board_invitation_of_user(user_id=user_id, board_id=board_id, db=self.db)
+        existing_invitation = get_pending_board_invitation_of_user(user_id=invite_info.user_id,
+                                                                   board_id=invite_info.board_id, db=self.db)
         if existing_invitation:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="User already has a pending invitation to this board"
             )
-        if check_if_user_in_board(user_id=user_id, board_id=board_id, db=self.db):
+        if check_if_user_in_board(user_id=invite_info.user_id, board_id=invite_info.board_id, db=self.db):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="User already in this board"
@@ -163,12 +165,11 @@ def delete_board(board_id: int,
     return controller.delete_board(board_id=board_id)
 
 @board_router.post("/{board_id}/invite", status_code=status.HTTP_200_OK)
-def invite_user_to_board(board_id: int,
-                         user_id: int,
+def invite_user_to_board(invite_info: InviteRequest,
                          controller: BoardController = Depends(get_board_controller),
                          active_user : TokenData = Depends(get_current_user),
                          _: None = Depends(require_board_role(["owner"]))):
-    return controller.invite_user_to_board(board_id=board_id,user_id=user_id,active_user=active_user)
+    return controller.invite_user_to_board(invite_info=invite_info, active_user=active_user)
 
 
 

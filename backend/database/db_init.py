@@ -23,7 +23,6 @@ def initialize_roles_and_permissions():
         db.commit()
         db.refresh(admin_user)
 
-        db.close()
         print("Database initialized successfully.")
 
 

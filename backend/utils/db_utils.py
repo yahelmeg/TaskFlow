@@ -13,5 +13,4 @@ def db_add_and_refresh(db: Session, obj: SQLModel):
     db.add(obj)
     db.commit()
     db.refresh(obj)
-    db.close()
     return obj
