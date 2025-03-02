@@ -10,9 +10,19 @@ TaskFlow is a task management API system that enables users to collaborate by cr
 - **Roles**: Dynamic board-specific roles and static user roles encoded in tokens for role based access control.
 - **RESTful API**: Well-structured API endpoints for integration.
 
+## Roles
+
+### Static Role (User-level)
+- **Admin**: Can manage all users, boards, and tasks system-wide
+
+### Dynamic Roles (Board-specific)
+- **Owner**: Can manage a specific board and its tasks
+- **Contributor**: Can create and manage their own tasks on a board
+- **Viewer**: Can only view tasks on a board
+
 ## Endpoints
 
-### User
+### User 
 - `GET /user` - Get all users  
 - `GET /user/{user_id}` - Get a specific user  
 - `DELETE /user/{user_id}` - Delete a user  
@@ -25,17 +35,20 @@ TaskFlow is a task management API system that enables users to collaborate by cr
 - `POST /refresh` - Refresh access token using the refresh token
 
 ### Board
-- `POST /board` - Create a new board  
-- `GET /board/{board_id}/users` - Get users of a board  
+- `POST /board` - Create a new board
+- `GET /board` - Get all boards
+- `GET /board/{board_id}/users` - Get users of a board
 - `PATCH /board/{board_id}` - Update board details  
 - `DELETE /board/{board_id}` - Delete a board  
-- `GET /board` - Get all boards  
-- `POST /board/{board_id}/invite?user_id={user_id}` - Invite user to board
+- `POST /board/{board_id}/invite/{user_id}` - Invite user to board
+- `PATCH /board/{board_id}/role/{user_id}` - Change user's role in board
+
 
 ### Me
 - `GET /me/boards` - Get all the active user's boards
 - `GET /me/user` - Get the active user's info
-- `GET /me/past-invitations` - Get the active user's invitations that were accepted/declined
+- `PATCH /me/user` - Update the active user's info
+- `GET /me/past-invitations` - Get the active user's invitations that were accepted or declined
 - `GET /me/pending-invitations` - Get the active user's pending invitations
 
 ### Invitations
