@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, HTTPException
 from sqlmodel import Session, select
 
+from backend.authentication.encryption import hash_password
 from backend.dependencies.auth_dependencies import get_current_user
 from backend.dependencies.db_dependencies import get_db
 from backend.models.board import Board
@@ -11,6 +12,8 @@ from backend.schemas.board import BoardResponse
 from backend.schemas.user import UserResponse
 from backend.schemas.invitation import InvitationResponse
 from backend.utils.invitation_utils import get_pending_invitations_for_user, get_past_invitations_for_user
+from backend.schemas.user import UserUpdateRequest
+from backend.utils.user_utils import get_user_by_id, email_exists
 
 me_router = APIRouter(prefix="/me", tags=['Me'])
 
@@ -39,6 +42,22 @@ class MeController:
         past_invitations = get_past_invitations_for_user(user_id=active_user.id,db=self.db)
         return [InvitationResponse.model_validate(invitation.model_dump()) for invitation in past_invitations]
 
+    def update_my_info(self, user_update: UserUpdateRequest, active_user: TokenData = Depends(get_current_user)) -> UserResponse:
+        user = get_user_by_id(user_id=active_user.id, db=self.db)
+        if not user:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        if user_update.email and user_update.email != user.email:
+            if email_exists(email=user_update.email, db=self.db):
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
+            user.email = user_update.email
+        if user_update.name:
+            user.name = user_update.name
+        if user_update.password:
+            user.hashed_password = hash_password(user_update.password)
+        self.db.commit()
+        self.db.refresh(user)
+        return UserResponse.model_validate(user.model_dump())
+
 
 def get_me_controller(db: Session = Depends(get_db)) -> MeController:
     return MeController(db)
@@ -49,7 +68,13 @@ def get_user_boards(controller: MeController = Depends(get_me_controller),
     return controller.get_my_boards(active_user=active_user)
 
 @me_router.get("/user", response_model=UserResponse, status_code=status.HTTP_200_OK)
-def get_my_profile(controller: MeController = Depends(get_me_controller),
+def get_my_profile(user_update: UserUpdateRequest,
+                   controller: MeController = Depends(get_me_controller),
+                   active_user: TokenData = Depends(get_current_user)):
+    return controller.update_my_info( user_update=user_update, active_user=active_user)
+
+@me_router.patch("/user", response_model=UserResponse, status_code=status.HTTP_200_OK)
+def update_my_info(controller: MeController = Depends(get_me_controller),
                    active_user: TokenData = Depends(get_current_user)):
     return controller.get_my_profile(active_user=active_user)
 
@@ -62,6 +87,7 @@ def get_my_pending_invitations(controller: MeController = Depends(get_me_control
 def get_my_past_invitations(controller: MeController = Depends(get_me_controller),
                    active_user: TokenData = Depends(get_current_user)):
     return controller.get_my_past_invitations(active_user=active_user)
+
 
 
 
