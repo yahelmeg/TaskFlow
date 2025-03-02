@@ -10,12 +10,10 @@ from backend.dependencies.db_dependencies import get_db
 from backend.models.board import Board
 from backend.models.invitation import Invitation, InvitationStatus
 from backend.models.relationships import UserBoardLink
-from backend.models.role import Role
-from backend.models.user import User
+from backend.models.role import RolesEnum
 from backend.schemas.authentication import TokenData
-from backend.schemas.board import BoardResponse, BoardUserResponse, BoardCreateRequest, BoardUpdateRequest, InviteRequest
-from backend.utils.board_utils import get_board_by_id, check_if_user_in_board
-from backend.utils.db_utils import db_add_and_refresh
+from backend.schemas.board import BoardResponse, BoardUserResponse, BoardCreateRequest, BoardUpdateRequest
+from backend.utils.board_utils import get_board_by_id, check_if_user_in_board, get_users_in_boards, get_user_board_link
 from backend.utils.role_utils import get_role_by_name
 from backend.utils.user_utils import get_user_by_id
 from backend.utils.invitation_utils import get_pending_board_invitation_of_user
@@ -31,15 +29,19 @@ class BoardController:
         user = get_user_by_id(user_id=active_user.id, db=self.db)
         if not user:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-        new_board = db_add_and_refresh(
-            db=self.db,
-            obj=Board(name=board_info.name, description=board_info.description, owner_id=active_user.id)
-        )
+
+        new_board = Board(name=board_info.name, description=board_info.description, owner_id=active_user.id)
+        self.db.add(new_board)
+
+        self.db.flush()
+
         role = get_role_by_name(role_name="owner",db=self.db)
-        db_add_and_refresh(
-            db=self.db,
-            obj=UserBoardLink(user_id=active_user.id,board_id=new_board.id,role_id=role.id)
-        )
+        user_board_link =UserBoardLink(user_id=active_user.id,board_id=new_board.id,role_id=role.id)
+        self.db.add(user_board_link)
+
+        self.db.commit()
+        self.db.refresh(new_board)
+
         return BoardResponse.model_validate(new_board.model_dump())
 
     def get_board_users(self, board_id: int) -> List[BoardUserResponse]:
@@ -47,14 +49,8 @@ class BoardController:
         board = get_board_by_id(board_id=board_id,db=self.db)
         if not board:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Board not found")
-        users_in_board_statement = (
-            select(User, Role)
-            .select_from(User)
-            .join(UserBoardLink)
-            .join(Role)
-            .where(UserBoardLink.board_id == board.id)
-        )
-        users_in_board = self.db.exec(users_in_board_statement).all()
+
+        users_in_board = get_users_in_boards(board_id=board_id, db=self.db)
         user_responses = [
             BoardUserResponse(
                 name = user.name,
@@ -93,39 +89,66 @@ class BoardController:
         self.db.commit()
         return None
 
-    def invite_user_to_board(self, invite_info: InviteRequest,
+    def invite_user_to_board(self, board_id: int, user_id: int,
                              active_user: TokenData = Depends(get_current_user)):
-        #todo check that the request comes from board owner
-        board = get_board_by_id(board_id=invite_info.board_id, db=self.db)
+        board = get_board_by_id(board_id=board_id, db=self.db)
         if not board:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Board not found")
-        user = get_user_by_id(user_id=invite_info.user_id, db=self.db)
+        user = get_user_by_id(user_id=user_id, db=self.db)
         if not user:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-        existing_invitation = get_pending_board_invitation_of_user(user_id=invite_info.user_id,
-                                                                   board_id=invite_info.board_id, db=self.db)
+        existing_invitation = get_pending_board_invitation_of_user(user_id=user_id,
+                                                                   board_id=board_id, db=self.db)
         if existing_invitation:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="User already has a pending invitation to this board"
             )
-        if check_if_user_in_board(user_id=invite_info.user_id, board_id=invite_info.board_id, db=self.db):
+        if check_if_user_in_board(user_id=user_id, board_id=board_id, db=self.db):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="User already in this board"
             )
 
-        db_add_and_refresh(
-            db=self.db,
-            obj=Invitation(
+        new_invitation = Invitation(
                 status=InvitationStatus.PENDING,
                 board_id=board_id,
                 invited_user_id= user_id,
                 inviter_user_id= active_user.id
-            )
         )
+        self.db.add(new_invitation)
+        self.db.commit()
+        self.db.refresh(new_invitation)
 
         return {"message": "Invitation sent successfully"}
+
+    def update_user_board_role(self, board_id: int, user_id: int, role_name: str):
+        board = get_board_by_id(board_id=board_id, db=self.db)
+        if not board:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Board not found")
+        user_board_link = get_user_board_link(board_id=board_id, user_id=user_id, db=self.db)
+        if not user_board_link:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User is not a member of this board"
+            )
+        role = get_role_by_name(role_name=role_name, db=self.db)
+        if not role:
+            if not role:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Role {role_name} not found"
+                )
+        if role_name == RolesEnum.OWNER:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Cannot change user role to owner"
+            )
+        user_board_link.role_id =  role.id
+        self.db.commit()
+
+        return {"message": f"User role updated to {role_name} successfully"}
+
 
 def get_board_controller(db: Session = Depends(get_db)) ->BoardController:
     return BoardController(db)
@@ -164,12 +187,22 @@ def delete_board(board_id: int,
                  __: None = Depends(require_board_role(["owner"]))):
     return controller.delete_board(board_id=board_id)
 
-@board_router.post("/{board_id}/invite", status_code=status.HTTP_200_OK)
-def invite_user_to_board(invite_info: InviteRequest,
+@board_router.post("/{board_id}/invite/{user_id}", status_code=status.HTTP_200_OK)
+def invite_user_to_board(board_id: int, user_id: int,
                          controller: BoardController = Depends(get_board_controller),
                          active_user : TokenData = Depends(get_current_user),
                          _: None = Depends(require_board_role(["owner"]))):
-    return controller.invite_user_to_board(invite_info=invite_info, active_user=active_user)
+    return controller.invite_user_to_board(board_id=board_id,user_id=user_id, active_user=active_user)
+
+@board_router.patch("/{board_id}/role/{user_id}",status_code = status.HTTP_200_OK)
+def update_user_board_role(board_id:int,
+                           user_id:int,
+                           role_name:str,
+                           controller: BoardController = Depends(get_board_controller),
+                           _: TokenData = Depends(get_current_user),
+                           __: None = Depends(require_board_role(["owner"]))):
+    return controller.update_user_board_role(board_id=board_id,user_id=user_id,role_name=role_name)
+
 
 
 

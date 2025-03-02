@@ -11,9 +11,9 @@ from backend.database.db_init import  delete_database, create_tables, initialize
 
 app = FastAPI()
 
-# delete_database()
-# create_tables()
-# initialize_roles_and_permissions()
+delete_database()
+create_tables()
+initialize_roles_and_permissions()
 
 routers = [ invitation_router, me_router, board_router, auth_router, user_router]
 

@@ -8,6 +8,7 @@ from backend.models.invitation import InvitationStatus
 from backend.dependencies.db_dependencies import get_db
 from backend.utils.invitation_utils import get_invitation_of_user
 from backend.utils.role_utils import get_role_by_name
+from backend.utils.board_utils import get_user_board_link
 
 invitation_router = APIRouter(prefix="/invitation", tags=['Invitation'])
 
@@ -25,13 +26,8 @@ class InvitationController:
         if invitation.status != InvitationStatus.PENDING:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invitation is already processed")
 
-        link_statement = (
-            select(UserBoardLink)
-            .where(UserBoardLink.board_id == invitation.board_id)
-            .where(UserBoardLink.user_id == active_user.id)
-        )
 
-        board_user_link = self.db.exec(link_statement).first()
+        board_user_link = get_user_board_link(board_id=invitation.board_id, user_id=active_user.id,db=self.db)
 
         if board_user_link:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User is already a member of this board")
@@ -50,9 +46,8 @@ class InvitationController:
 
     def decline_invitation(self, invitation_id: int, active_user: TokenData = Depends(get_current_user)) -> dict:
 
-        invitation = get_invitation_of_user(invitation_id=invitation_id, active_user_id=active_user.id,
+        invitation = get_invitation_of_user(invitation_id=invitation_id, user_id=active_user.id,
                                             db=self.db)
-
         if not invitation:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invitation not found")
 

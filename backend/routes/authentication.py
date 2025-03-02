@@ -9,7 +9,6 @@ from backend.dependencies.db_dependencies import get_db
 from backend.models.user import User
 from backend.schemas.authentication import RegisterRequest, Token
 from backend.schemas.user import UserResponse
-from backend.utils.db_utils import db_add_and_refresh
 from backend.utils.user_utils import email_exists, get_user_by_email, get_user_by_id
 from backend.utils.token_utils import blacklist_refresh_token, check_blacklisted
 
@@ -25,11 +24,12 @@ class AuthController:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already taken")
 
         hashed_password = hash_password(password=user.password)
-        new_user = db_add_and_refresh(
-            db=self.db,
-            obj=User( email=user.email, name=user.name, hashed_password=hashed_password)
-        )
-        return new_user
+        new_user = User( email=user.email, name=user.name, hashed_password=hashed_password)
+        self.db.add(new_user)
+        self.db.commit()
+        self.db.refresh(new_user)
+
+        return UserResponse.model_validate(new_user.model_dump())
 
     def login(self, user_credentials: OAuth2PasswordRequestForm = Depends() ) -> Token:
 
