@@ -27,6 +27,7 @@ class MeController:
         return [BoardResponse.model_validate(board.model_dump()) for board in boards]
 
     def get_my_profile(self, active_user: TokenData = Depends(get_current_user)) -> UserResponse:
+        print("????????")
         user_statement = select(User).where(User.id == active_user.id)
         user = self.db.exec(user_statement).first()
         return UserResponse.model_validate(user.model_dump())
@@ -37,7 +38,6 @@ class MeController:
         return [InvitationResponse.model_validate(invitation.model_dump()) for invitation in pending_invitations]
 
     def get_my_past_invitations(self, active_user: TokenData = Depends(get_current_user)) -> list[InvitationResponse]:
-        print("here")
 
         past_invitations = get_past_invitations_for_user(user_id=active_user.id,db=self.db)
         return [InvitationResponse.model_validate(invitation.model_dump()) for invitation in past_invitations]
@@ -45,7 +45,7 @@ class MeController:
     def update_my_info(self, user_update: UserUpdateRequest, active_user: TokenData = Depends(get_current_user)) -> UserResponse:
         user = get_user_by_id(user_id=active_user.id, db=self.db)
         if not user:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User does not exist")
         if user_update.email and user_update.email != user.email:
             if email_exists(email=user_update.email, db=self.db):
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
@@ -67,14 +67,14 @@ def get_user_boards(controller: MeController = Depends(get_me_controller),
                     active_user: TokenData = Depends(get_current_user)):
     return controller.get_my_boards(active_user=active_user)
 
-@me_router.get("/user", response_model=UserResponse, status_code=status.HTTP_200_OK)
-def get_my_profile(user_update: UserUpdateRequest,
+@me_router.patch("/user", response_model=UserResponse, status_code=status.HTTP_200_OK)
+def update_my_info(user_update: UserUpdateRequest,
                    controller: MeController = Depends(get_me_controller),
                    active_user: TokenData = Depends(get_current_user)):
     return controller.update_my_info( user_update=user_update, active_user=active_user)
 
-@me_router.patch("/user", response_model=UserResponse, status_code=status.HTTP_200_OK)
-def update_my_info(controller: MeController = Depends(get_me_controller),
+@me_router.get("/user", response_model=UserResponse, status_code=status.HTTP_200_OK)
+def get_my_profile(controller: MeController = Depends(get_me_controller),
                    active_user: TokenData = Depends(get_current_user)):
     return controller.get_my_profile(active_user=active_user)
 

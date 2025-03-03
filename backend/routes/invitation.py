@@ -21,7 +21,7 @@ class InvitationController:
         invitation = get_invitation_of_user(invitation_id=invitation_id, user_id=active_user.id,
                                             db=self.db)
         if not invitation:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invitation not found")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invitation does not exist")
 
         if invitation.status != InvitationStatus.PENDING:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invitation is already processed")
@@ -49,7 +49,7 @@ class InvitationController:
         invitation = get_invitation_of_user(invitation_id=invitation_id, user_id=active_user.id,
                                             db=self.db)
         if not invitation:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invitation not found")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invitation does not exist")
 
         if invitation.status != InvitationStatus.PENDING:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invitation already processed")

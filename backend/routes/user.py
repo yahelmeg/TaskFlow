@@ -19,7 +19,7 @@ class UserController:
     def get_user(self, user_id: int ) -> UserResponse:
         user = get_user_by_id(user_id=user_id, db=self.db)
         if not user:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User does not exist")
         return UserResponse.model_validate(user.model_dump())
 
     def get_users(self) -> list[UserResponse]:
@@ -29,7 +29,7 @@ class UserController:
     def update_user(self, user_id: int, user_update: UserUpdateRequest ) -> UserResponse:
         user = get_user_by_id(user_id=user_id, db=self.db)
         if not user:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User does not exist")
         if user_update.email and user_update.email != user.email:
             if email_exists(email=user_update.email, db=self.db):
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
@@ -46,7 +46,7 @@ class UserController:
     def delete_user(self, user_id: int) :
         user = get_user_by_id(user_id=user_id, db=self.db)
         if not user:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User does not exist")
         self.db.delete(user)
         self.db.commit()
         return None

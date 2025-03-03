@@ -28,7 +28,7 @@ class BoardController:
 
         user = get_user_by_id(user_id=active_user.id, db=self.db)
         if not user:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User does not exist")
 
         new_board = Board(name=board_info.name, description=board_info.description, owner_id=active_user.id)
         self.db.add(new_board)
@@ -48,7 +48,7 @@ class BoardController:
 
         board = get_board_by_id(board_id=board_id,db=self.db)
         if not board:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Board not found")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Board does not exist")
 
         users_in_board = get_users_in_boards(board_id=board_id, db=self.db)
         user_responses = [
@@ -68,7 +68,7 @@ class BoardController:
     def update_board(self,board_id: int,  board_info: BoardUpdateRequest) -> BoardResponse:
         board = get_board_by_id(board_id=board_id,db=self.db)
         if not board:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Board not found")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Board does not exist")
         if board_info.name:
             board.name = board_info.name
         if board_info.description:
@@ -83,7 +83,7 @@ class BoardController:
         #todo handle cascade deleting, board and tasks in the board should get deleted
         board = get_board_by_id(board_id=board_id,db=self.db)
         if not board:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Board not found")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Board does not exist")
 
         self.db.delete(board)
         self.db.commit()
@@ -93,10 +93,10 @@ class BoardController:
                              active_user: TokenData = Depends(get_current_user)):
         board = get_board_by_id(board_id=board_id, db=self.db)
         if not board:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Board not found")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Board does not exist")
         user = get_user_by_id(user_id=user_id, db=self.db)
         if not user:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User does not exist")
         existing_invitation = get_pending_board_invitation_of_user(user_id=user_id,
                                                                    board_id=board_id, db=self.db)
         if existing_invitation:
@@ -125,7 +125,7 @@ class BoardController:
     def update_user_board_role(self, board_id: int, user_id: int, role_name: str):
         board = get_board_by_id(board_id=board_id, db=self.db)
         if not board:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Board not found")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Board does not exist")
         user_board_link = get_user_board_link(board_id=board_id, user_id=user_id, db=self.db)
         if not user_board_link:
             raise HTTPException(
@@ -137,7 +137,7 @@ class BoardController:
             if not role:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Role {role_name} not found"
+                    detail=f"Role {role_name} does not exist"
                 )
         if role_name == RolesEnum.OWNER:
             raise HTTPException(

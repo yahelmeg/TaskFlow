@@ -1,6 +1,7 @@
-from typing import Optional
+from typing import Optional, List
 
-from sqlmodel import SQLModel, Field
+from sqlmodel import SQLModel, Field, Relationship
+from backend.models.list import TaskList
 
 
 class Board(SQLModel, table=True):
@@ -9,3 +10,5 @@ class Board(SQLModel, table=True):
     description: Optional[str] = None
     owner_id: int
 
+    # Relationships
+    task_lists: List["TaskList"] = Relationship()

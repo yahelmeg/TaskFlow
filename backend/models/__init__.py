@@ -1,1 +1,1 @@
-from . import user, role, board, comment, activity, task, category
+from . import user, role, board, comment, activity, task, tag, list
