@@ -9,6 +9,7 @@ from backend.models.list import TaskList
 
 from backend.schemas.authentication import TokenData
 from backend.schemas.list import ListCreateRequest, ListUpdateRequest, ListResponse
+from backend.utils.board_utils import get_board_by_id
 from backend.utils.list_utils import get_list_by_id, get_lists_of_board
 
 list_router = APIRouter(tags=['List'])
@@ -19,6 +20,9 @@ class ListController:
 
     def create_list(self, board_id: int, list_info: ListCreateRequest) ->ListResponse:
 
+        db_board = get_board_by_id(board_id=board_id,db=self.db)
+        if not db_board:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Board does not exist")
         new_list = TaskList(name=list_info.name, description=list_info.description, board_id=board_id)
 
         self.db.add(new_list)

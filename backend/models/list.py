@@ -1,7 +1,9 @@
 from typing import Optional, List
 from sqlmodel import SQLModel, Field, Relationship
 from datetime import datetime
+
 from backend.utils.time_utils import utc_now
+from backend.models.task import Task
 
 
 class TaskList(SQLModel, table=True):
@@ -12,3 +14,6 @@ class TaskList(SQLModel, table=True):
 
     # foreign key
     board_id: int = Field(default=None, foreign_key="board.id", index=True)
+
+    # Relationships
+    task_lists: List["Task"] = Relationship()
