@@ -22,11 +22,6 @@ TaskFlow is a task management API system that enables users to collaborate by cr
 
 ## Endpoints
 
-### User 
-- `GET /user` - Get all users  
-- `GET /user/{user_id}` - Get a specific user  
-- `DELETE /user/{user_id}` - Delete a user  
-- `PATCH /user/{user_id}` - Update a user  
 
 ### Authentication
 - `POST /register` - Register a new user  
@@ -43,6 +38,16 @@ TaskFlow is a task management API system that enables users to collaborate by cr
 - `POST /board/{board_id}/invite/{user_id}` - Invite user to board
 - `PATCH /board/{board_id}/role/{user_id}` - Change user's role in board
 
+### List  
+- `POST /board/{board_id}/list` - Create a new list in a board  
+- `GET /board/{board_id}/list` - Get all lists in a board  
+- `GET /list/{list_id}` - Get details of a specific list  
+- `PATCH /list/{list_id}` - Update list details  
+- `DELETE /list/{list_id}` - Delete a list  
+
+### Invitations
+- `POST /invitation/{invitation_id}/accept` - Accept an invitation 
+- `POST /invitation/{invitation_id}/decline` - Decline an invitation 
 
 ### Me
 - `GET /me/boards` - Get all the active user's boards
@@ -50,10 +55,11 @@ TaskFlow is a task management API system that enables users to collaborate by cr
 - `PATCH /me/user` - Update the active user's info
 - `GET /me/past-invitations` - Get the active user's invitations that were accepted or declined
 - `GET /me/pending-invitations` - Get the active user's pending invitations
-
-### Invitations
-- `POST /invitation/{invitation_id}/accept` - Accept an invitation 
-- `POST /invitation/{invitation_id}/decline` - Decline an invitation 
-
+- 
+### User
+- `GET /user` - Get all users
+- `GET /user/{user_id}` - Get a specific user
+- `DELETE /user/{user_id}` - Delete a user
+- `PATCH /user/{user_id}` - Update a user
 
 
