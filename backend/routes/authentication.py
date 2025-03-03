@@ -46,7 +46,6 @@ class AuthController:
         return Token(access_token=access_token, refresh_token=refresh_token, token_type="Bearer")
 
     def refresh_token(self, refresh_token: str) -> Token:
-        print("here")
         payload = verify_token(token=refresh_token, exception_message="Invalid refresh token" )
         user_id = payload.get("sub")
 

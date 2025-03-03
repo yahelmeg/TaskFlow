@@ -27,7 +27,6 @@ class MeController:
         return [BoardResponse.model_validate(board.model_dump()) for board in boards]
 
     def get_my_profile(self, active_user: TokenData = Depends(get_current_user)) -> UserResponse:
-        print("????????")
         user_statement = select(User).where(User.id == active_user.id)
         user = self.db.exec(user_statement).first()
         return UserResponse.model_validate(user.model_dump())
@@ -49,11 +48,14 @@ class MeController:
         if user_update.email and user_update.email != user.email:
             if email_exists(email=user_update.email, db=self.db):
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
-            user.email = user_update.email
-        if user_update.name:
-            user.name = user_update.name
-        if user_update.password:
-            user.hashed_password = hash_password(user_update.password)
+
+        update_data = user_update.model_dump(exclude_unset=True)
+        for key, value in update_data.items():
+            if key == "password":
+                setattr(user, "hashed_password", hash_password(password=key))
+            elif hasattr(user, key):
+                setattr(user, key, value)
+
         self.db.commit()
         self.db.refresh(user)
         return UserResponse.model_validate(user.model_dump())

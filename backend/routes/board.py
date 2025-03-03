@@ -65,14 +65,14 @@ class BoardController:
         boards = self.db.exec(select(Board)).all()
         return [BoardResponse.model_validate(board.model_dump()) for board in boards]
 
-    def update_board(self,board_id: int,  board_info: BoardUpdateRequest) -> BoardResponse:
+    def update_board(self,board_id: int,  board_update: BoardUpdateRequest) -> BoardResponse:
         board = get_board_by_id(board_id=board_id,db=self.db)
         if not board:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Board does not exist")
-        if board_info.name:
-            board.name = board_info.name
-        if board_info.description:
-            board.description = board_info.description
+
+        update_data = board_update.model_dump(exclude_unset=True)
+        for key, value in update_data.items():
+            setattr(board, key, value)
 
         self.db.commit()
         self.db.refresh(board)

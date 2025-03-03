@@ -37,12 +37,12 @@ class ListController:
         if not db_list:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="List does not exist")
 
-        if list_update.name:
-            db_list.name = list_update.name
-        if list_update.description:
-            db_list.description = list_update.description
+        update_data = list_update.model_dump(exclude_unset=True)
+        for key, value in update_data.items():
+            setattr(db_list, key, value)
 
         self.db.commit()
+        self.db.refresh(db_list)
 
         return ListResponse.model_validate(db_list.model_dump())
 

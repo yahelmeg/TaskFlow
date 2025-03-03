@@ -34,12 +34,17 @@ class UserController:
             if email_exists(email=user_update.email, db=self.db):
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
             user.email = user_update.email
-        if user_update.name:
-            user.name = user_update.name
-        if user_update.password:
-            user.hashed_password = hash_password(user_update.password)
+
+        update_data = user_update.model_dump(exclude_unset=True)
+        for key, value in update_data.items():
+            if key == "password":
+                setattr(user, "hashed_password", hash_password(password=key))
+            elif hasattr(user, key):
+                setattr(user, key, value)
+
         self.db.commit()
         self.db.refresh(user)
+
         return UserResponse.model_validate(user.model_dump())
 
     # when user gets deleted all their links with boards gets deleted ( UserBoardLink class )
