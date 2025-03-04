@@ -1,14 +1,16 @@
 from sqlmodel import Session, select, SQLModel
 
-from backend.models.list import List
+from backend.models.task_list import TaskList
 
 
-def get_list_by_id(list_id: int, db: Session):
-    list_statement = select(List).where(List.id == list_id)
-    db_list = db.exec(list_statement).first()
-    return db_list
+def get_task_list_by_id( task_list_id: int, db : Session ) -> TaskList:
+    statement = select(TaskList).where(TaskList.id == task_list_id)
+    task_list = db.exec(statement).first()
+    return task_list
 
 def get_lists_of_board(board_id: int, db: Session):
-    lists_statement = select(List).where(List.board_id == board_id)
+    lists_statement = select(TaskList).where(TaskList.board_id == board_id)
     lists = db.exec(lists_statement).all()
     return lists
+
+

@@ -14,6 +14,6 @@ class ListResponse(BaseModel):
     board_id: int
 
 class ListUpdateRequest(BaseModel):
-    name: Optional[str]
-    description: Optional[str]
+    name: Optional[str] = None
+    description: Optional[str] = None
 
