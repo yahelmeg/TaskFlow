@@ -5,15 +5,14 @@ from typing import List, Optional
 from sqlmodel import SQLModel, Field, Relationship
 
 from backend.models.activity import TaskActivity
-from backend.models.board import Board
 from backend.models.tag import TaskTag
 from backend.models.comment import TaskComment
 from backend.models.relationships import TaskTagLink, TaskUserLink
-from backend.models.user import User
 from backend.utils.time_utils import utc_now
 
 
 class TaskPriority(str, Enum):
+    NONE = "none"
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -35,8 +34,12 @@ class Task(SQLModel, table=True):
     created_at: datetime = Field(default_factory=utc_now)
     due_date: Optional[datetime]
 
+    # Foreign key
+    list_id: int = Field(default=None, foreign_key="tasklist.id", index=True)
+    creator_id: int = Field(default=None, foreign_key="user.id", index=True)
+    board_id: int = Field(default=None, foreign_key="board.id", index=True)
+
     # Relationships
-    creator: Optional["User"] = Relationship(link_model=TaskUserLink)
     task_tags: List["TaskTag"] = Relationship(link_model=TaskTagLink)
     task_activities: List["TaskActivity"] = Relationship()
     task_comments: List["TaskComment"] = Relationship()

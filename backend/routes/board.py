@@ -5,7 +5,7 @@ from sqlmodel import Session, select
 
 from backend.authentication.jwt_handler import get_current_user
 from backend.dependencies.auth_dependencies import require_role
-from backend.dependencies.board_dependencies import require_board_role
+from backend.dependencies.board_dependencies import require_board_role, owner_roles, any_roles
 from backend.dependencies.db_dependencies import get_db
 from backend.models.board import Board
 from backend.models.invitation import Invitation, InvitationStatus
@@ -163,7 +163,7 @@ def create_board(board_info: BoardCreateRequest,
 def get_board_users(board_id: int,
                     controller: BoardController = Depends(get_board_controller),
                     _: TokenData = Depends(get_current_user),
-                    __: None = Depends(require_board_role(["owner","contributor","viewer"]))):
+                    __: None = Depends(require_board_role(any_roles()))):
     return controller.get_board_users(board_id=board_id)
 
 @board_router.get("/", response_model=List[BoardResponse], status_code=status.HTTP_200_OK)
@@ -177,21 +177,21 @@ def update_board(board_id : int,
                  board_update: BoardUpdateRequest,
                  controller: BoardController = Depends(get_board_controller),
                  _: TokenData = Depends(get_current_user),
-                 __: None = Depends(require_board_role(["owner"]))):
+                 __: None = Depends(require_board_role(owner_roles()))):
     return controller.update_board(board_id=board_id, board_update=board_update)
 
 @board_router.delete("/delete/{board_id}", status_code = status.HTTP_204_NO_CONTENT)
 def delete_board(board_id: int,
                  controller: BoardController = Depends(get_board_controller),
                  _: TokenData = Depends(get_current_user),
-                 __: None = Depends(require_board_role(["owner"]))):
+                 __: None = Depends(require_board_role(owner_roles()))):
     return controller.delete_board(board_id=board_id)
 
 @board_router.post("/{board_id}/invite/{user_id}", status_code=status.HTTP_200_OK)
 def invite_user_to_board(board_id: int, user_id: int,
                          controller: BoardController = Depends(get_board_controller),
                          active_user : TokenData = Depends(get_current_user),
-                         _: None = Depends(require_board_role(["owner"]))):
+                         _: None = Depends(require_board_role(owner_roles()))):
     return controller.invite_user_to_board(board_id=board_id,user_id=user_id, active_user=active_user)
 
 @board_router.patch("/{board_id}/role/{user_id}",status_code = status.HTTP_200_OK)
@@ -200,7 +200,7 @@ def update_user_board_role(board_id:int,
                            role_name:str,
                            controller: BoardController = Depends(get_board_controller),
                            _: TokenData = Depends(get_current_user),
-                           __: None = Depends(require_board_role(["owner"]))):
+                           __: None = Depends(require_board_role(owner_roles()))):
     return controller.update_user_board_role(board_id=board_id,user_id=user_id,role_name=role_name)
 
 

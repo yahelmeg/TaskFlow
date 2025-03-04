@@ -1,3 +1,4 @@
+from typing import List
 from fastapi import Depends, HTTPException, status
 from sqlmodel import Session, select
 
@@ -32,3 +33,13 @@ def require_board_role(required_roles: list[str]):
         return active_user
 
     return role_checker
+
+
+def owner_roles() -> List[str]:
+    return ["owner"]
+
+def edit_roles() -> List[str]:
+    return ["owner", "contributor"]
+
+def any_roles() -> List[str]:
+    return ["owner", "contributor", "viewer"]

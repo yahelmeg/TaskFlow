@@ -32,7 +32,6 @@ class MeController:
         return UserResponse.model_validate(user.model_dump())
 
     def get_my_pending_invitations(self, active_user: TokenData = Depends(get_current_user)) -> list[InvitationResponse]:
-
         pending_invitations = get_pending_invitations_for_user(user_id=active_user.id,db=self.db)
         return [InvitationResponse.model_validate(invitation.model_dump()) for invitation in pending_invitations]
 

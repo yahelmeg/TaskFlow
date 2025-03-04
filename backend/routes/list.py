@@ -4,7 +4,7 @@ from sqlmodel import Session
 
 from backend.authentication.jwt_handler import get_current_user
 from backend.dependencies.list_dependencies import require_board_role_from_list
-from backend.dependencies.board_dependencies import require_board_role
+from backend.dependencies.board_dependencies import require_board_role, owner_roles, edit_roles, any_roles
 from backend.dependencies.db_dependencies import get_db
 from backend.models.task_list import TaskList
 
@@ -49,6 +49,8 @@ class ListController:
         return ListResponse.model_validate(db_list.model_dump())
 
     def delete_list(self, list_id: int) -> None:
+        #todo handle cascade deleting, board and tasks in the board should get deleted
+
         db_list = get_task_list_by_id(task_list_id=list_id, db=self.db )
         if not db_list:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="List does not exist")
@@ -81,7 +83,7 @@ def create_list(board_id: int,
                 list_info: ListCreateRequest,
                 controller: ListController = Depends(get_list_controller),
                 _: TokenData = Depends(get_current_user),
-                __: None = Depends(require_board_role(["owner", "contributor"]))):
+                __: None = Depends(require_board_role(edit_roles()))):
     return controller.create_list(board_id=board_id, list_info=list_info)
 
 @list_router.patch("/list/{list_id}", response_model=ListResponse, status_code=status.HTTP_200_OK)
@@ -89,26 +91,26 @@ def update_list(list_id: int,
                 list_update: ListUpdateRequest,
                 controller: ListController = Depends(get_list_controller),
                 _: TokenData = Depends(get_current_user),
-                __: None = Depends(require_board_role_from_list(["owner", "contributor"]))):
+                __: None = Depends(require_board_role_from_list(edit_roles()))):
     return controller.update_list(list_id=list_id, list_update=list_update)
 
 @list_router.delete("/list/{list_id}",  status_code=status.HTTP_204_NO_CONTENT)
 def delete_list(list_id: int,
                 controller: ListController = Depends(get_list_controller),
                 _: TokenData = Depends(get_current_user),
-                __: None = Depends(require_board_role_from_list(["owner", "contributor"]))):
+                __: None = Depends(require_board_role_from_list(edit_roles()))):
     return controller.delete_list(list_id=list_id)
 
 @list_router.get("/list/{list_id}", response_model=ListResponse, status_code=status.HTTP_200_OK)
 def get_list(list_id: int,
             controller: ListController = Depends(get_list_controller),
             _: TokenData = Depends(get_current_user),
-            __: None = Depends(require_board_role_from_list(["owner", "contributor", "viewer"]))):
+            __: None = Depends(require_board_role_from_list(any_roles()))):
     return controller.get_list(list_id=list_id)
 
 @list_router.get("/board/{board_id}/list", response_model=List[ListResponse], status_code=status.HTTP_200_OK)
 def get_board_lists(board_id: int,
                 controller: ListController = Depends(get_list_controller),
                 _: TokenData = Depends(get_current_user),
-                __: None = Depends(require_board_role(["owner", "contributor", "viewer"]))):
+                __: None = Depends(require_board_role(any_roles()))):
     return controller.get_board_lists(board_id=board_id)
