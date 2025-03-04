@@ -174,11 +174,11 @@ def get_boards(controller: BoardController = Depends(get_board_controller),
 
 @board_router.patch("/update/{board_id}", response_model=BoardResponse, status_code=status.HTTP_200_OK)
 def update_board(board_id : int,
-                 board_info: BoardUpdateRequest,
+                 board_update: BoardUpdateRequest,
                  controller: BoardController = Depends(get_board_controller),
                  _: TokenData = Depends(get_current_user),
                  __: None = Depends(require_board_role(["owner"]))):
-    return controller.update_board(board_id=board_id, board_info=board_info)
+    return controller.update_board(board_id=board_id, board_update=board_update)
 
 @board_router.delete("/delete/{board_id}", status_code = status.HTTP_204_NO_CONTENT)
 def delete_board(board_id: int,

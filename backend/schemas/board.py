@@ -19,8 +19,8 @@ class BoardCreateRequest(BaseModel):
     description: Optional[str]
 
 class BoardUpdateRequest(BaseModel):
-    name: str
-    description: Optional[str]
+    name: Optional[str] = None
+    description: Optional[str] = None
 
 class InviteRequest(BaseModel):
     board_id: int

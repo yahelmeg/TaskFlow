@@ -1,7 +1,7 @@
 from typing import Optional, List
 
 from sqlmodel import SQLModel, Field, Relationship
-from backend.models.list import TaskList
+from backend.models.task_list import TaskList
 
 
 class Board(SQLModel, table=True):
