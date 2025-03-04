@@ -45,6 +45,14 @@ TaskFlow is a task management API system that enables users to collaborate by cr
 - `PATCH /list/{list_id}` - Update list details  
 - `DELETE /list/{list_id}` - Delete a list  
 
+### Task  
+- `POST /list/{list_id}/task` - Create a new task in a list  
+- `GET /task/{task_id}` - Get details of a specific task  
+- `PATCH /task/{task_id}` - Update details of a specific task  
+- `DELETE /task/{task_id}` - Delete a task  
+- `GET /list/{list_id}/task` - Get all tasks in a specific list
+- `GET /board/{board_id}/task` - Get all tasks in a specific board
+
 ### Invitations
 - `POST /invitation/{invitation_id}/accept` - Accept an invitation 
 - `POST /invitation/{invitation_id}/decline` - Decline an invitation 
@@ -55,7 +63,7 @@ TaskFlow is a task management API system that enables users to collaborate by cr
 - `PATCH /me/user` - Update the active user's info
 - `GET /me/past-invitations` - Get the active user's invitations that were accepted or declined
 - `GET /me/pending-invitations` - Get the active user's pending invitations
-- 
+
 ### User
 - `GET /user` - Get all users
 - `GET /user/{user_id}` - Get a specific user
